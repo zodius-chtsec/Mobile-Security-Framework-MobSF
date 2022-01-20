@@ -81,13 +81,16 @@ def unzip(app_path, ext_path):
     try:
         files = []
         with zipfile.ZipFile(app_path, 'r') as zipptr:
-            for fileinfo in zipptr.infolist():
-                filename = fileinfo.filename
-                if not isinstance(filename, str):
-                    filename = str(
-                        filename, encoding='utf-8', errors='replace')
-                files.append(filename)
-                zipptr.extract(filename, ext_path)
+            for filename in zipptr.namelist():
+                right_fn = filename.encode('cp437').decode('utf-8')
+                right_path = ext_path + "/" + right_fn
+                if right_fn.endswith("/"):
+                    Path(right_path).mkdir(parents=True, exist_ok=True)
+                else:
+                    # copy file
+                    with open(right_path, 'wb') as dst, zipptr.open(filename, 'r') as src:
+                        shutil.copyfileobj(src, dst)
+                files.append(right_fn)
         return files
     except Exception:
         logger.exception('Unzipping Error')
